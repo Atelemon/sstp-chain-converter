@@ -1,0 +1,74 @@
+name: Update public node collection
+on:
+  issues:
+    types: [opened, edited]
+permissions:
+  contents: read
+concurrency:
+  group: node-collection-update
+  cancel-in-progress: false
+jobs:
+  update:
+    if: github.event.issue.title == '更新节点集合' && github.event.issue.user.login == github.repository_owner && github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Validate and write collection
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          owner = event['repository']['owner']['login']
+          issue = event['issue']
+          if event['sender']['login'] != owner or issue['user']['login'] != owner:
+              raise SystemExit('Only the repository owner can update nodes.')
+          body = issue.get('body') or ''
+          if len(body.encode('utf-8')) > 220000:
+              raise SystemExit('Input exceeds size limit.')
+          match = re.fullmatch(r'```text\r?\n(.*?)\r?\n```', body.strip(), re.S)
+          if not match:
+              raise SystemExit('Place the collection inside one text code block.')
+          lines = [x.strip() for x in match[1].splitlines() if x.strip()]
+          if not 1 <= len(lines) <= 2000:
+              raise SystemExit('Collection must contain 1 to 2000 lines.')
+          for i, line in enumerate(lines, 1):
+              try:
+                  if line.count('#') != 1 or line.count('$') != 1:
+                      raise ValueError()
+                  head, endpoint = line.split('$', 1)
+                  entry, name = head.split('#', 1)
+                  if not re.fullmatch(r'[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?(?::[0-9]{1,5})?', entry):
+                      raise ValueError()
+                  if not re.fullmatch(r'(US|JP|KR|RU|TW|HK|SG|GB|DE|CA|AU) 链式SSTP代理', name):
+                      raise ValueError()
+                  u = urlsplit(endpoint)
+                  if u.scheme != 'sstp' or not u.hostname or not u.username or not u.port or not 1 <= u.port <= 65535 or u.query or u.fragment or u.path not in ('', '/'):
+                      raise ValueError()
+                  if re.search(r'[\s\x00-\x1f\x7f]', endpoint):
+                      raise ValueError()
+              except ValueError:
+                  raise SystemExit('Invalid format at line ' + str(i))
+          text = '\n'.join(lines) + '\n'
+          if len(text.encode('utf-8')) > 200000:
+              raise SystemExit('Collection exceeds 200 KB.')
+          Path('nodes.txt').write_text(text, encoding='utf-8')
+          print('Validated node count:', len(lines))
+          PY
+      - name: Commit collection
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add nodes.txt
+          if git diff --cached --quiet; then
+            echo 'No collection changes.'
+          else
+            git commit -m 'Update node collection from owner submission'
+            git push origin HEAD:main
+          fi

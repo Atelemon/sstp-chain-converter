@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import argparse, concurrent.futures, datetime as dt, ipaddress, json, os, re, socket, sys
+import concurrent.futures, datetime as dt, ipaddress, json, os, re, socket, sys
 import urllib.parse, urllib.request
 from pathlib import Path
 
@@ -81,16 +81,6 @@ def read_nodes(path):
         raise ValueError('Invalid node in '+path)
     return rows
 
-def merge():
-    manual,auto = read_nodes('nodes-manual.txt'),read_nodes('nodes-auto.txt')
-    merged = {}
-    for row in manual+auto:
-        merged.setdefault(row.split('$',1)[1],row)
-    if not merged:
-        raise ValueError('No nodes to publish')
-    Path('nodes.txt').write_text('\n'.join(merged.values())+'\n',encoding='utf8')
-    print('Merged: manual=',len(manual),'auto=',len(auto),'unique=',len(merged))
-
 def refresh():
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.:-]*',ENTRY):
         raise ValueError('Invalid entry host')
@@ -119,15 +109,11 @@ def refresh():
     if not rows:
         raise ValueError('No recognized countries; previous collection preserved')
     Path('nodes-auto.txt').write_text('\n'.join(rows)+'\n',encoding='utf8')
-    merge()
-    print('Auto nodes:',len(rows),'skipped:',len(records)-len(rows))
+    print('Auto nodes:,len(rows),'skipped:',len(records)-len(rows))
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser()
-    p.add_argument('--merge-only',action='store_true')
-    a = p.parse_args()
     try:
-        merge() if a.merge_only else refresh()
+        refresh()
     except Exception as exc:
         print('Update failed:',exc,file=sys.stderr)
         sys.exit(1)

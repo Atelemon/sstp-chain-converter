@@ -58,16 +58,14 @@ jobs:
           text = '\n'.join(lines) + '\n'
           if len(text.encode('utf-8')) > 200000:
               raise SystemExit('Collection exceeds 200 KB.')
-          Path('nodes-manual.txt').write_text(text, encoding='utf-8')
+          Path('nodes.txt').write_text(text, encoding='utf-8')
           print('Validated node count:', len(lines))
           PY
-      - name: Publish manual collection only
-        run: cp nodes-manual.txt nodes.txt
       - name: Commit collection
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add nodes-manual.txt nodes.txt
+          git add nodes.txt
           if git diff --cached --quiet; then
             echo 'No collection changes.'
           else

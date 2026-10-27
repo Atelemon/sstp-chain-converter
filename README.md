@@ -19,12 +19,17 @@ Actions 的自动提交不会触发普通 Pages 分支构建，因此更新后�
 如果仓库禁用 Actions 或受组织权限限制，任务可能失败。查看 Actions 任务日志，不要随意扩大权限。
 
 
-## VPNGate 自动获取与汇聚
+## VPNGate 自动抓取（未检测节点独立发布）
 
-新增 `update_vpngate.py` 和 `.github/workflows/refresh-vpngate.yml`。每 6 小时及手动触发时，尝试北京时间与 UTC 当前秒级时间戳作为 token；若都不可用，再尝试仓库 Actions Secret `VPNGATE_TOKEN` 中配置的原始 token。**时间戳格式只是推测，尚未证实上游接受动态 token。** 所有 token 尝试都需返回可解析的 SSTP 列表，否则不更新任何结果。
+未经检测的 VPNGate SSTP 节点**绝不自动加入** `nodes.txt`。两个 Raw 地址完全分开：
 
-第一次使用请到 Settings → Secrets and variables → Actions → New repository secret，创建 `VPNGATE_TOKEN`，值为自行掌握的有效 token（不要提交到代码或 Issue）。如果确认服务端不支持当前时间 token，可以把工作流 `VPNGATE_TIME_TOKENS` 设为 `false`，只用固定 token。可以在 Actions → Refresh VPNGate SSTP nodes → Run workflow 手动运行并检查日志；未验证接口成功前不要假定自动更新正常。
+- 原有手动节点（由网页和 Issue 更新）：https://raw.githubusercontent.com/Atelemon/sstp-chain-converter/main/nodes.txt
+- 自动抓取的未检测节点：https://raw.githubusercontent.com/Atelemon/sstp-chain-converter/main/nodes-auto.txt
 
-`nodes-manual.txt` 保存手工节点，`nodes-auto.txt` 保存上游拉取节点，`nodes.txt` 为两者按 SSTP 地址去重后的固定输出。原来的 Issue 流程现只覆盖手动集合并触发重新合并，不再直接冲掉自动数据。原有 `nodes.txt` 已预先复制到 `nodes-manual.txt`。
+`nodes-manual.txt` 用于保存手动提交的原始集合，`nodes.txt` 与其内容保持一致；`nodes-auto.txt` 仅存放自动抓取结果。两个 GitHub Actions 工作流不再互相合并，定时刷新只会提交 `nodes-auto.txt`。
 
-仅接受地区备注或 IP 地址地理位置识别为 US/JP/KR/RU/TW/HK/SG/GB/DE/CA/AU 的节点；无法判断地区则跳过。这是地址的地理信息，不是对 SSTP 实际出口、住宅属性、节点可用性或 IP 信誉的验证。当前没有接入 AbuseIPDB/Scamalytics。GitHub 仓库及 TXT 是公开的，请不要向这些文件提交私人账号凭据。
+`update_vpngate.py` 配合 `.github/workflows/refresh-vpngate.yml` 每 6 小时及手动触发时获取一次上游 SSTP 订阅，先尝试北京时间、UTC 当前秒级时间戳 token；无效时退回到 Actions Secret `VPNGATE_TOKEN` 配置的固定 token。时间格式只是推测，并未证实上游接受动态 token。只有返回可解析的 SSTP 记录、且存在能识别地区的节点时才更新 `nodes-auto.txt`，失败时保留既有文件。
+
+在 Settings → Secrets and variables → Actions 中可创建 `VPNGATE_TOKEN` Secret 保存有效 token。若确认动态 token 不被服务端接受，可把自动工作流中的 `VPNGATE_TIME_TOKENS` 设为 `false`。
+
+自动节点仅按照订阅备注或 IP 地理信息分区；**未经连通性、出口住宅属性、信誉/纯净度或安全性验证**，不可当作已检测节点使用。允许的地区为 US/JP/KR/RU/TW/HK/SG/GB/DE/CA/AU，其他地区或无法判定地区的节点会跳过。公开仓库、Issue、TXT 及 Git 历史可能暴露节点凭据，请勿放入私人账号密码。

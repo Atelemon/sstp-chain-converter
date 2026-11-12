@@ -1,4 +1,4 @@
-021063.xyz#JP 链式SSTP代理$sstp://vpn:vpn@vpn526062445.opengw.net:1999
+021063.xyz#JP 链式SSTP代理$sstp://vpn:vpn@vpn161939641.opengw.net:1374
 021063.xyz#KR 链式SSTP代理$sstp://vpn:vpn@vpn703603871.opengw.net:1272
 021063.xyz#JP 链式SSTP代理$sstp://vpn:vpn@vpn945893058.opengw.net:1242
 021063.xyz#KR 链式SSTP代理$sstp://vpn:vpn@vpn964247477.opengw.net:1573
@@ -6,7 +6,6 @@
 021063.xyz#KR 链式SSTP代理$sstp://vpn:vpn@vpn237755744.opengw.net:995
 021063.xyz#KR 链式SSTP代理$sstp://vpn:vpn@vpn895630926.opengw.net:1904
 021063.xyz#HK 链式SSTP代理$sstp://vpn:vpn@vpn807319024.opengw.net:1760
-021063.xyz#JP 链式SSTP代理$sstp://vpn:vpn@vpn954697126.opengw.net:1546
 021063.xyz#JP 链式SSTP代理$sstp://vpn:vpn@vpn939655436.opengw.net:1612
 021063.xyz#KR 链式SSTP代理$sstp://vpn:vpn@vpn343930795.opengw.net:1454
 021063.xyz#JP 链式SSTP代理$sstp://vpn:vpn@vpn748339546.opengw.net:1349
